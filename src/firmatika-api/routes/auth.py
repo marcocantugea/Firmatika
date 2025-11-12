@@ -1,10 +1,11 @@
 import random
 import uuid
-from fastapi import APIRouter, Body,HTTPException
+from fastapi import APIRouter, Body,HTTPException,Request
+from httpx import request
 from models.user import User
 from models.userCreated import UserCreate
 from models.tokenRefreshRequest import TokenRefreshRequest
-from services.firestore import save_user_to_firestore,verificar_usuario,get_user_by_email,verify_user_duplicate,verify_user_duplicateName
+from services.firestore import save_user_to_firestore,verificar_usuario,get_user_by_email,verify_user_duplicate,verify_user_duplicateName,log_user_creation
 from datetime import datetime
 from services.email import enviar_codigo_verificacion
 from passlib.context import CryptContext
@@ -21,7 +22,7 @@ def health_check():
     return {"status": "ok"}
 
 @router.post("/registro")
-def registrar_usuario(user_created: UserCreate):
+def registrar_usuario(user_created: UserCreate, request: Request):
     user= User(
         uuid=str(uuid.uuid4()),
         nombre=user_created.nombre,
@@ -40,7 +41,26 @@ def registrar_usuario(user_created: UserCreate):
     if verify_user_duplicateName(user.nombre, user.apellido):
         user.posible_duplicate_account = True
     
+    # Guardar usuario en Firestore
     save_user_to_firestore(user)
+
+    # Registrar información adicional del usuario
+    ip_address = request.client.host
+    user_agent = request.headers.get("user-agent")
+    referral_source = request.headers.get("referer")  # opcional
+    additional_info = request.headers.get("x-custom-info")  # si usas headers personalizados
+
+    log_user_creation(
+        user_uuid=user.uuid,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        referral_source=referral_source,
+        additional_info=additional_info
+    )
+
+    log_user_creation(user.uuid, ip_address, user_agent, referral_source, additional_info)
+
+    ## Enviar código de verificación por correo
     enviar_codigo_verificacion(user.email, user.codigo_verificacion)
     return {"mensaje": "Usuario registrado. Se envió un código de verificación al correo."}
 

@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from models.user import User
 from dotenv import load_dotenv
+from models.userCreationLog import UserCreationLog
 
 load_dotenv()
 
@@ -45,3 +46,14 @@ def verify_user_duplicateName(nombre: str, apellido: str) -> bool:
     query = usuarios_ref.where("nombre", "==", nombre).where("apellido", "==", apellido).limit(1)
     results = query.stream()
     return any(True for _ in results)
+
+def log_user_creation(user_uuid: str, ip_address: str = None, user_agent: str = None, referral_source: str = None, additional_info: str = None):
+    log_entry = UserCreationLog(
+        user_uuid=user_uuid,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        referral_source=referral_source,
+        additional_info=additional_info
+    )
+    db.collection("user_creation_logs").add(log_entry.dict())
+    return log_entry
