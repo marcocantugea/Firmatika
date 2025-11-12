@@ -3,10 +3,12 @@ import uuid
 from fastapi import APIRouter, Body,HTTPException
 from models.user import User
 from models.userCreated import UserCreate
+from models.tokenRefreshRequest import TokenRefreshRequest
 from services.firestore import save_user_to_firestore,verificar_usuario,get_user_by_email,verify_user_duplicate,verify_user_duplicateName
 from datetime import datetime
 from services.email import enviar_codigo_verificacion
 from passlib.context import CryptContext
+from services.session import crear_token_sesion,renovar_token_sesion
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -63,5 +65,18 @@ def login(email: str = Body(...), password: str = Body(...)):
     if not pwd_context.verify(password, hashed_password):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
-    return {"mensaje": "Login exitoso", "email": email}
 
+    session = crear_token_sesion(data.get("uuid"))
+    return {"success": True, "token": session.token, "expires_at": session.expires_at}
+
+@router.post("/session/refresh")
+def refresh_token(request: TokenRefreshRequest):
+    try:
+        nueva_sesion = renovar_token_sesion(request.token)
+        return {
+            "mensaje": "Token renovado",
+            "token": nueva_sesion.token,
+            "expires_at": nueva_sesion.expires_at
+        }
+    except HTTPException as e:
+        raise e
