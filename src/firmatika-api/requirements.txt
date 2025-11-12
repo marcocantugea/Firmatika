@@ -1,0 +1,23 @@
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+
+# Firestore (Google Cloud)
+google-cloud-firestore==2.13.0
+google-auth==2.29.0
+
+# Email (opcional: SendGrid)
+sendgrid==6.11.0
+
+# Validación y seguridad
+pydantic==2.6.4
+python-dotenv==1.0.1
+passlib[bcrypt]==1.7.4
+
+# CORS (si usarás frontend separado)
+fastapi[all]==0.110.0
+
+#dotenv
+python-dotenv==1.0.1
+
+# Firebase Admin SDK
+firebase-admin==6.4.0
