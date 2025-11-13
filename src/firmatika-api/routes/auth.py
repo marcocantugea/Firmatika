@@ -87,7 +87,7 @@ def login(email: str = Body(...), password: str = Body(...)):
 
 
     session = crear_token_sesion(data.get("uuid"))
-    return {"success": True, "token": session.token, "expires_at": session.expires_at}
+    return {"success": True, "token": session.token, "expires_at": session.expires_at,"user_id":user.uuid }
 
 @router.post("/session/refresh")
 def refresh_token(request: TokenRefreshRequest):
@@ -96,7 +96,8 @@ def refresh_token(request: TokenRefreshRequest):
         return {
             "mensaje": "Token renovado",
             "token": nueva_sesion.token,
-            "expires_at": nueva_sesion.expires_at
+            "expires_at": nueva_sesion.expires_at,
+            "user_id": nueva_sesion.user_uuid
         }
     except HTTPException as e:
         raise e

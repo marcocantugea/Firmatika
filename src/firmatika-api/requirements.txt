@@ -21,3 +21,6 @@ python-dotenv==1.0.1
 
 # Firebase Admin SDK
 firebase-admin==6.4.0
+
+# Google Cloud Storage
+google-cloud-storage==2.10.0
