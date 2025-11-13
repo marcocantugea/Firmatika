@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Body, File,HTTPException,Request, UploadFile
 from models.documentoFirmado import DocumentoFirmado
 from services.documents import list_signed_documents_by_user, update_signed_document_blockchain_info,verify_signed_document_duplicate,save_signed_document,log_signed_document_action,update_signed_document_upload_info,get_signed_document_by_id
-from services.gsc import subir_pdf_a_gcs
+from services.gsc import subir_pdf_a_gcs, generar_url_firmada
 
 router = APIRouter()
 
@@ -30,7 +30,7 @@ def add_user_document(user_id: str, payload: dict = Body(...)):
         raise HTTPException(status_code=400, detail="Documento duplicado")
     
     save_signed_document(documento)
-    log_signed_document_action(documento.uuid, "created", documento.fecha_subida.isoformat())
+    log_signed_document_action(documento.uuid, "created", datetime.utcnow().isoformat())
     return {"message": "Documento agregado", "documento": documento}
 
 @router.post("/documentos/{document_id}/archivo")
@@ -63,5 +63,16 @@ def registrar_en_blockchain(document_id: str):
     #mock resoltado de la transacción
     blockchain_tx_hash = f"0x{hashlib.sha256(f'{document_id}{hash_documento}{datetime.utcnow().timestamp()}'.encode()).hexdigest()}"
     tx_result = update_signed_document_blockchain_info(document_id, {"tx_hash": blockchain_tx_hash})
+    log_signed_document_action(document_id, "registered_on_blockchain", datetime.utcnow().isoformat())
 
     return {"mensaje": "Documento registrado en blockchain", "tx": tx_result}
+
+@router.get("/documentos/{document_id}/url")
+def obtener_url_documento(document_id: str):
+    document = get_signed_document_by_id(document_id)
+    if not document or not document.gcs_path:
+        raise HTTPException(status_code=404, detail="Documento no encontrado o sin archivo asociado")
+
+    gcs_path = generar_url_firmada(document_id)
+    log_signed_document_action(document_id, "url_generated", datetime.utcnow().isoformat())
+    return {"document_id": document_id, "gcs_path": gcs_path}

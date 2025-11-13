@@ -25,7 +25,7 @@ def get_signed_document_by_id(document_id: str) -> DocumentoFirmado | None:
         return DocumentoFirmado(**data)
     return None
 
-def update_signed_document_upload_info(document_id: str, hash_documento: str, gcs_path: str):
+def update_signed_document_upload_info(document_id: str, hash_documento: str, gcs_path: dict[str, str]):
     doc_ref = db.collection("documentos_firmados").document(document_id)
     doc_ref.update({
         "hash_documento": hash_documento,

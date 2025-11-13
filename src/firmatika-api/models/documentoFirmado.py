@@ -9,7 +9,7 @@ class DocumentoFirmado(BaseModel):
     nombre: str  # nombre del documento
     descripcion: Optional[str] = None
     hash_documento: Optional[str] = None  # hash SHA256 del archivo PDF
-    gcs_path: Optional[str] = None  # ruta o ID del archivo en Google Cloud Storage
+    gcs_path: Optional[Dict[str, str]] = None  # ruta o ID del archivo en Google Cloud Storage
     fecha_subida: Optional[datetime] = None
     fecha_eliminacion: Optional[datetime]=None # fecha programada para eliminación (1 año después)
     blockchain_tx: Optional[Dict[str, str]] = None  # info del resultado en blockchain
