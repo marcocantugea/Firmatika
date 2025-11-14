@@ -54,3 +54,15 @@ def firmar_hash_en_blockchain(hash_documento: str) -> dict:
     )
 
     return result.dict()
+
+from web3 import Web3
+
+def wallet_existe_en_red(address: str) -> bool:
+    w3 = Web3(Web3.HTTPProvider(os.getenv("BLOCKCHAIN_RPC_URL")))
+    if not Web3.is_address(address):
+        return False  # Formato inválido
+
+    balance = w3.eth.get_balance(address)
+    tx_count = w3.eth.get_transaction_count(address)
+
+    return balance > 0 or tx_count > 0
