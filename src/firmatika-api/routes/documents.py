@@ -5,6 +5,7 @@ from fastapi import APIRouter, Body, File,HTTPException,Request, UploadFile
 from models.documentoFirmado import DocumentoFirmado
 from services.documents import list_signed_documents_by_user, update_signed_document_blockchain_info,verify_signed_document_duplicate,save_signed_document,log_signed_document_action,update_signed_document_upload_info,get_signed_document_by_id
 from services.gsc import subir_pdf_a_gcs, generar_url_firmada
+from services.blockchain import firmar_hash_en_blockchain
 
 router = APIRouter()
 
@@ -61,11 +62,12 @@ def registrar_en_blockchain(document_id: str):
 
     # Aquí iría tu lógica de firma en blockchain
     #mock resoltado de la transacción
-    blockchain_tx_hash = f"0x{hashlib.sha256(f'{document_id}{hash_documento}{datetime.utcnow().timestamp()}'.encode()).hexdigest()}"
-    tx_result = update_signed_document_blockchain_info(document_id, {"tx_hash": blockchain_tx_hash})
+    #blockchain_tx_hash = f"0x{hashlib.sha256(f'{document_id}{hash_documento}{datetime.utcnow().timestamp()}'.encode()).hexdigest()}"
+    blockchain_tx_hash = firmar_hash_en_blockchain(hash_documento)
+    update_signed_document_blockchain_info(document_id, blockchain_tx_hash)
     log_signed_document_action(document_id, "registered_on_blockchain", datetime.utcnow().isoformat())
 
-    return {"mensaje": "Documento registrado en blockchain", "tx": tx_result}
+    return {"mensaje": "Documento registrado en blockchain", "tx": blockchain_tx_hash}
 
 @router.get("/documentos/{document_id}/url")
 def obtener_url_documento(document_id: str):

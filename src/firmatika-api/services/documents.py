@@ -4,6 +4,7 @@ from firebase_admin import credentials, firestore
 from models.user import User
 from dotenv import load_dotenv
 from models.documentoFirmado import DocumentoFirmado
+from models.documentoFirmado import BlockchainTx
 
 load_dotenv()
 
@@ -33,7 +34,7 @@ def update_signed_document_upload_info(document_id: str, hash_documento: str, gc
         "fecha_subida": firestore.SERVER_TIMESTAMP
     })
 
-def update_signed_document_blockchain_info(document_id: str, blockchain_tx: dict):
+def update_signed_document_blockchain_info(document_id: str, blockchain_tx: BlockchainTx):
     doc_ref = db.collection("documentos_firmados").document(document_id)
     doc_ref.update({
         "blockchain_tx": blockchain_tx
@@ -65,5 +66,5 @@ def log_signed_document_action(document_id: str, action: str, timestamp: str):
         "action": action,
         "timestamp": timestamp
     }
-    db.collection("documento_firmado_logs").add(log_entry)
+    db.collection("documentos_firmado_logs").add(log_entry)
     return log_entry
