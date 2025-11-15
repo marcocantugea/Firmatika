@@ -68,3 +68,10 @@ def log_signed_document_action(document_id: str, action: str, timestamp: str):
     }
     db.collection("documentos_firmado_logs").add(log_entry)
     return log_entry
+
+def get_document_by_uuid(document_uuid: str) -> DocumentoFirmado | None:
+    doc_ref = db.collection("documentos_firmados").where("uuid", "==", document_uuid).limit(1)
+    doc = doc_ref.get()
+    if doc:
+        return DocumentoFirmado(**doc[0].to_dict())
+    return None

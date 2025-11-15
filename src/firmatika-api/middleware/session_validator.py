@@ -7,7 +7,8 @@ from datetime import datetime
 class SessionValidatorMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Excepciones: rutas públicas
-        if request.url.path in ["/login", "/registro","/verificar", "/healthcheck"]:
+        print( request.url.path )
+        if request.url.path in ["/login", "/registro","/verificar", "/healthcheck"] or request.url.path.startswith("/firmantes/verificar") or request.url.path.startswith("/openapi.json"):
             return await call_next(request)
 
         # Extraer token del header

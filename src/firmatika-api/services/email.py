@@ -8,8 +8,13 @@ import traceback
 
 load_dotenv()
 
-def enviar_codigo_verificacion(email: str, codigo: str):
-    msg = MIMEText(f"Tu código de verificación es: {codigo}")
+def enviar_codigo_verificacion(email: str, codigo: str, url_verificacion: str = None):
+    if url_verificacion:
+        mensaje = f"Tu código de verificación es: {codigo}\nVerifica tu identidad aquí: {url_verificacion}"
+    else:
+        mensaje = f"Tu código de verificación es: {codigo}"
+    
+    msg = MIMEText(mensaje)
     msg["Subject"] = "Verificación Firmatika"
     msg["From"] = os.getenv("EMAIL_FROM")
     msg["To"] = email
