@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, File,HTTPException,Request, UploadFile
 from models.firmanteRequest import FirmanteRequest
 from models.firmante import Firmante
 from models.firmanteFirmarRequest import FirmanteFirmarRequest
-from services.firmantes import add_firmante_to_document,valida_token_verificacion,actualizar_firmante,get_firmante_by_email,get_firmante_by_uuid,actualizar_firmante_wallet,acutializar_firmante_biometrica,get_documentos_by_firmante_uuid
+from services.firmantes import add_firmante_to_document,valida_token_verificacion,actualizar_firmante,get_firmante_by_email,get_firmante_by_uuid,actualizar_firmante_wallet,acutializar_firmante_biometrica,get_documentos_by_firmante_uuid,get_documento_by_firmante_uuid
 from models.firmanteCodigoVerificacionRequest import FirmanteCodigoVerificacionRequest
 from services.session import crear_token_sesion,renovar_token_sesion,token_session_exists
 from services.blockchain import wallet_existe_en_red
@@ -126,18 +126,19 @@ async def actualizar_biometrica_firmante(firmante_uuid: str, biometric_data: dic
 @router.post("/firmantes/firmar/{documento_uuid}")
 def firmar_documento(documento_uuid: str, firmante_firmar_request: FirmanteFirmarRequest = Body(...)):
 
-    documento = get_documentos_by_firmante_uuid(documento_uuid)
+    firmante = get_documento_by_firmante_uuid(firmante_firmar_request.firmante_uuid, documento_uuid)
 
-    if not documento:
+    if not firmante:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
 
     
-    if(documento.firma_delegada):
+    if(firmante.firma_delegada):
        #logica para firma delegada
+       print("firma delegada")
        pass
     else:
        #logica para firma con wallet
        pass
 
     # Lógica para firmar el documento según el método de verificación
-    return {"message": f"Documento {documento_uuid} firmado usando {firmante_firmar_request.metodo_verificacion}"}
+    return {"message": f"Documento {firmante.documento_uuid} firmado usando {firmante_firmar_request.metodo_verificacion}"}

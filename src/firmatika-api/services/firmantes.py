@@ -93,13 +93,22 @@ def get_firmante_by_uuid(firmante_uuid: str) -> Firmante | None:
 
 def get_documentos_by_firmante_uuid(firmante_uuid: str):
     firmantes_ref = db.collection("firmantes")
-    query = firmantes_ref.where("uuid", "==", firmante_uuid)
+    query = firmantes_ref.where("documento_uuid", "==", firmante_uuid)
     results = query.stream()
     documentos = []
     for doc in results:
         data = doc.to_dict()
         documentos.append(data)
     return documentos
+
+def get_documento_by_firmante_uuid(firmante_uuid: str, documento_uuid: str):
+    firmantes_ref = db.collection("firmantes")
+    query = firmantes_ref.where("documento_uuid", "==", documento_uuid).where("uuid", "==", firmante_uuid).limit(1)
+    results = query.stream()
+    for doc in results:
+        data = doc.to_dict()
+        return Firmante(**data)
+    return None
 
 def actualizar_firmante_wallet(firmante_uuid: str, wallet_address: str):
     

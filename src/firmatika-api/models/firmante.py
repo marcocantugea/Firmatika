@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional,Any
 from datetime import datetime
 from models.documentoFirmado import BlockchainTx
 
@@ -19,4 +19,4 @@ class Firmante(BaseModel):
     codigo_verificacion: Optional[str] = None  # código enviado por email para verificar identidad
     token_verificacion: Optional[str] = None  # token temporal para verificar identidad
     acceso_verificado: bool = False  # si ya se verificó identidad
-    biometric_data: Optional[dict[str, str]] = None  # datos biométricos si aplica
+    biometric_data: Optional[dict[str, Any]] = None  # datos biométricos si aplica
