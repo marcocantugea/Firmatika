@@ -5,8 +5,12 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Body, File,HTTPException,Request, UploadFile
 from models.firmanteRequest import FirmanteRequest
 from models.firmante import Firmante
-from services.firmantes import add_firmante_to_document,valida_token_verificacion,actualizar_firmante,get_firmante_by_email
+from models.firmanteFirmarRequest import FirmanteFirmarRequest
+from services.firmantes import add_firmante_to_document,valida_token_verificacion,actualizar_firmante,get_firmante_by_email,get_firmante_by_uuid,actualizar_firmante_wallet,acutializar_firmante_biometrica,get_documentos_by_firmante_uuid
 from models.firmanteCodigoVerificacionRequest import FirmanteCodigoVerificacionRequest
+from services.session import crear_token_sesion,renovar_token_sesion,token_session_exists
+from services.blockchain import wallet_existe_en_red
+from services.documents import get_document_by_uuid
 
 router = APIRouter()
 
@@ -42,20 +46,26 @@ async def add_firmante(document_uuid: str, firmante_request: FirmanteRequest = B
 async def verificar_firmante(token: str,codigo_verificacion_request: FirmanteCodigoVerificacionRequest = Body(...)):
     firmante = valida_token_verificacion(token)
 
+    if not firmante:
+        raise HTTPException(status_code=404, detail="Token de verificación inválido")
+
     if firmante.acceso_verificado:
         return {"message": "Firmante ya verificado previamente, solicite un nuevo código si es necesario"}
 
-    if not firmante:
-        raise HTTPException(status_code=404, detail="Token de verificación inválido")
-    
     if firmante.codigo_verificacion != codigo_verificacion_request.codigo_verificacion:
         raise HTTPException(status_code=400, detail="Código de verificación incorrecto")
     
     firmante.acceso_verificado = True
 
     actualizar_firmante(firmante)
+    token=""
+    token_session=token_session_exists(firmante.uuid)
+    if not token_session:
+        token = crear_token_sesion(firmante.uuid)
+    else:
+        token = renovar_token_sesion(firmante.uuid)
 
-    return {"message": "Firmante verificado exitosamente"}
+    return {"message": "Firmante verificado exitosamente", "firmante_uuid": firmante.uuid, "token": token.token}
 
 @router.post("/firmantes/reenviar_codigo")
 async def reenviar_codigo_verificacion(firmanteRequest: FirmanteRequest = Body(...)):
@@ -75,4 +85,59 @@ async def reenviar_codigo_verificacion(firmanteRequest: FirmanteRequest = Body(.
 
     from services.email import enviar_codigo_verificacion
     enviar_codigo_verificacion(firmante.email, firmante.codigo_verificacion, "http://127.0.0.1:8000/firmantes/verificar/"+firmante.token_verificacion)
-    return {"message": "Código de verificación reenviado exitosamente"}
+    return {"message": "Código de verificación reenviado exitosamente", "firmante_uuid": firmante.uuid}
+
+@router.patch("/firmantes/wallet/{firmante_uuid}")
+async def actualizar_wallet_firmante(firmante_uuid: str, wallet_address: str = Body(..., embed=True)):
+    firmante = get_firmante_by_uuid(firmante_uuid)
+
+    if not firmante:
+        raise HTTPException(status_code=404, detail="Firmante no encontrado")
+
+    if not wallet_existe_en_red(wallet_address):
+        raise HTTPException(status_code=400, detail="La dirección de wallet proporcionada no existe en la red blockchain")
+
+    firmante.wallet = wallet_address
+
+    try:
+        actualizar_firmante_wallet(firmante_uuid, wallet_address)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    return {"message": "Wallet del firmante actualizada exitosamente"}
+
+@router.patch("/firmantes/biometrica/{firmante_uuid}")
+async def actualizar_biometrica_firmante(firmante_uuid: str, biometric_data: dict = Body(...)):
+    firmante = get_firmante_by_uuid(firmante_uuid)
+
+    if not firmante:
+        raise HTTPException(status_code=404, detail="Firmante no encontrado")
+
+    firmante.biometric_data = biometric_data
+
+    try:
+        acutializar_firmante_biometrica(firmante_uuid, biometric_data)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    return {"message": "Datos biométricos del firmante actualizados exitosamente"}
+
+
+@router.post("/firmantes/firmar/{documento_uuid}")
+def firmar_documento(documento_uuid: str, firmante_firmar_request: FirmanteFirmarRequest = Body(...)):
+
+    documento = get_documentos_by_firmante_uuid(documento_uuid)
+
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    
+    if(documento.firma_delegada):
+       #logica para firma delegada
+       pass
+    else:
+       #logica para firma con wallet
+       pass
+
+    # Lógica para firmar el documento según el método de verificación
+    return {"message": f"Documento {documento_uuid} firmado usando {firmante_firmar_request.metodo_verificacion}"}

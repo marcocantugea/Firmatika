@@ -9,6 +9,7 @@ from models.firmante import Firmante
 from services.users import get_user_by_id
 from services.documents import get_document_by_uuid
 from services.email import enviar_codigo_verificacion
+from services.blockchain import wallet_existe_en_red
 
 load_dotenv()
 
@@ -69,6 +70,7 @@ def valida_token_verificacion(token: str) -> Firmante | None:
     return None
 
 def actualizar_firmante(firmante: Firmante):
+
     doc_ref = db.collection("firmantes").document(firmante.uuid)
     doc_ref.update(firmante.dict())
 
@@ -80,4 +82,44 @@ def get_firmante_by_email(email: str) -> Firmante | None:
         data = doc.to_dict()
         return Firmante(**data)
     return None
+
+def get_firmante_by_uuid(firmante_uuid: str) -> Firmante | None:
+    doc_ref = db.collection("firmantes").document(firmante_uuid)
+    doc = doc_ref.get()
+    if doc.exists:
+        data = doc.to_dict()
+        return Firmante(**data)
+    return None
+
+def get_documentos_by_firmante_uuid(firmante_uuid: str):
+    firmantes_ref = db.collection("firmantes")
+    query = firmantes_ref.where("uuid", "==", firmante_uuid)
+    results = query.stream()
+    documentos = []
+    for doc in results:
+        data = doc.to_dict()
+        documentos.append(data)
+    return documentos
+
+def actualizar_firmante_wallet(firmante_uuid: str, wallet_address: str):
+    
+    if not wallet_existe_en_red(wallet_address):
+        raise ValueError("La dirección de wallet proporcionada no existe en la red blockchain")
+    
+    doc_ref = db.collection("firmantes").document(firmante_uuid)
+    doc_ref.update({"wallet": wallet_address,"firma_delegada": False})
+
+def acutializar_firmante_biometrica(firmante_uuid: str, biometric_data: dict[str, str]):
+    doc_ref = db.collection("firmantes").document(firmante_uuid)
+    doc_ref.update({"biometric_data": biometric_data})
+
+
+def firmar_documento_blockchain(firmante_uuid: str, tx_hash: str, metodo_verificacion: str):
+    doc_ref = db.collection("firmantes").document(firmante_uuid)
+    doc_ref.update({
+        "firmado": True,
+        "fecha_firma": firestore.SERVER_TIMESTAMP,
+        "tx_hash": tx_hash,
+        "metodo_verificacion": metodo_verificacion
+    })
 

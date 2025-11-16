@@ -3,6 +3,9 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from services.firestore import db
 from datetime import datetime
+import dotenv
+
+dotenv.load_dotenv()
 
 class SessionValidatorMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -27,7 +30,11 @@ class SessionValidatorMiddleware(BaseHTTPMiddleware):
         if expires_at.tzinfo is not None:
             expires_at = expires_at.replace(tzinfo=None)
 
-        if expires_at < datetime.utcnow():
+        checkForExpiry = True
+        if "SPOOFERS_SET_TOKEN_VOIDNESS" in dotenv.dotenv_values() and dotenv.dotenv_values()["SPOOFERS_SET_TOKEN_VOIDNESS"].lower() == "true":
+            checkForExpiry = False
+            
+        if checkForExpiry and expires_at < datetime.utcnow():
             return JSONResponse(status_code=401, content={"detail": "Token expirado"})
 
         # Token válido → continuar

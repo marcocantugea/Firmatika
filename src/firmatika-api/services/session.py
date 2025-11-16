@@ -44,3 +44,7 @@ def renovar_token_sesion(token: str) -> UserSessionToken:
     doc_ref.delete()
     return nuevo_token
 
+def token_session_exists(user_uuid: str) -> bool:
+    doc_ref = db.collection("sesiones").document(user_uuid)
+    doc = doc_ref.get()
+    return doc.exists
