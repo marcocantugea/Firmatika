@@ -9,8 +9,8 @@ from models.firmanteFirmarRequest import FirmanteFirmarRequest
 from services.firmantes import add_firmante_to_document,valida_token_verificacion,actualizar_firmante,get_firmante_by_email,get_firmante_by_uuid,actualizar_firmante_wallet,acutializar_firmante_biometrica,get_documentos_by_firmante_uuid,get_documento_by_firmante_uuid
 from models.firmanteCodigoVerificacionRequest import FirmanteCodigoVerificacionRequest
 from services.session import crear_token_sesion,renovar_token_sesion,token_session_exists
-from services.blockchain import wallet_existe_en_red
-from services.documents import get_document_by_uuid
+from services.blockchain import firmar_hash_en_blockchain, wallet_existe_en_red
+from services.documents import get_document_by_uuid, update_signed_document_blockchain_info
 
 router = APIRouter()
 
@@ -131,6 +131,10 @@ def firmar_documento(documento_uuid: str, firmante_firmar_request: FirmanteFirma
     if not firmante:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
 
+    documento= get_document_by_uuid(documento_uuid)
+
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento no encontrado en sistema")
     
     if(firmante.firma_delegada):
        #logica para firma delegada
@@ -138,7 +142,12 @@ def firmar_documento(documento_uuid: str, firmante_firmar_request: FirmanteFirma
        pass
     else:
        #logica para firma con wallet
-       pass
+        print("firma delegada false")
+        print("Firmando documento en blockchain...")
+        print("Hash del documento:", documento.hash_documento)
+        nombre_completo=f"{firmante.nombres} {firmante.apellidos}"
+        blockchain_tx_hash = firmar_hash_en_blockchain(documento.hash_documento,nombre_completo, documento.nombre, documento.descripcion, False)
+        update_signed_document_blockchain_info(documento_uuid, blockchain_tx_hash)
 
     # Lógica para firmar el documento según el método de verificación
     return {"message": f"Documento {firmante.documento_uuid} firmado usando {firmante_firmar_request.metodo_verificacion}"}

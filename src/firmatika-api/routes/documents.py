@@ -6,6 +6,7 @@ from models.documentoFirmado import DocumentoFirmado
 from services.documents import list_signed_documents_by_user, update_signed_document_blockchain_info,verify_signed_document_duplicate,save_signed_document,log_signed_document_action,update_signed_document_upload_info,get_signed_document_by_id
 from services.gsc import subir_pdf_a_gcs, generar_url_firmada
 from services.blockchain import firmar_hash_en_blockchain
+from services.users import get_user_by_id
 
 router = APIRouter()
 
@@ -60,10 +61,21 @@ def registrar_en_blockchain(document_id: str):
     if not hash_documento:
         raise HTTPException(status_code=400, detail="Documento aún no tiene hash")
 
+
+    user = get_user_by_id(document.user_uuid)
+    print("Usuario obtenido:", user)
+    print("document user uuid:", document.user_uuid)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    nombre_completo = f"{user.nombre} {user.apellido}"
+
     # Aquí iría tu lógica de firma en blockchain
     #mock resoltado de la transacción
     #blockchain_tx_hash = f"0x{hashlib.sha256(f'{document_id}{hash_documento}{datetime.utcnow().timestamp()}'.encode()).hexdigest()}"
-    blockchain_tx_hash = firmar_hash_en_blockchain(hash_documento)
+    print("Firmando documento en blockchain...")
+    print("Hash del documento:", hash_documento)
+    blockchain_tx_hash = firmar_hash_en_blockchain(hash_documento,nombre_completo, document.nombre, document.descripcion, False)
     update_signed_document_blockchain_info(document_id, blockchain_tx_hash)
     log_signed_document_action(document_id, "registered_on_blockchain", datetime.utcnow().isoformat())
 
