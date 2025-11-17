@@ -90,3 +90,7 @@ def wallet_existe_en_red(address: str) -> bool:
     tx_count = w3.eth.get_transaction_count(direccion_checksum)
 
     return balance > 0 or tx_count > 0
+
+def get_url_transaction_blockchain(tx_hash: str) -> str:
+    base_url = os.getenv("BLOCKCHAIN_EXPLORER_URL")
+    return f"{base_url}/tx/0x{tx_hash}"

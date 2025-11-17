@@ -20,7 +20,7 @@ def generar_certificado(documento: DocumentoFirmado ):
     hash_documento = hashlib.sha256(contenido).digest()
 
     # 2. Cargar la llave privada desde un archivo PEM
-    with open("keys/public.pem", "rb") as key_file:
+    with open("keys/firmatika.pem", "rb") as key_file:
         private_key = serialization.load_pem_private_key(
             key_file.read(),
             password=None,  # si tu llave está protegida con passphrase, ponla aquí
