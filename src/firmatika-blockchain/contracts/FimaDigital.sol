@@ -19,8 +19,6 @@ contract FirmaDigital {
     // Firma normal (usuario con su wallet)
     function firmarDocumento(string memory hashDocumento,string memory nombreCompleto,string memory nombreDocumento,string memory descripcionDocumento, bool delegada) public {
         
-        //require(!yaFirmo[hashDocumento][msg.sender] || delegada, "E029: Ya has firmado este documento");
-
         firmasPorDocumento[hashDocumento].push(Firma({
             firmante: msg.sender,
             nombreCompleto: nombreCompleto,
@@ -38,7 +36,6 @@ contract FirmaDigital {
     // 🔥 Nueva función: firma delegada explícita
     function firmarDelegada(string memory hashDocumento, string memory nombreCompleto,string memory nombreDocumento,string memory descripcionDocumento, address usuario) public {
         // Aquí Firmatika (msg.sender) firma en nombre de "usuario"
-        require(!yaFirmo[hashDocumento][usuario], "E053:Ese usuario ya firmo este documento");
 
         firmasPorDocumento[hashDocumento].push(Firma({
             firmante: usuario,

@@ -10,7 +10,7 @@ from services.firmantes import add_firmante_to_document,valida_token_verificacio
 from models.firmanteCodigoVerificacionRequest import FirmanteCodigoVerificacionRequest
 from services.session import crear_token_sesion,renovar_token_sesion,token_session_exists
 from services.blockchain import firmar_hash_en_blockchain, wallet_existe_en_red
-from services.documents import get_document_by_uuid, update_signed_document_blockchain_info
+from services.documents import get_document_by_uuid, log_signed_document_action
 
 router = APIRouter()
 
@@ -98,9 +98,9 @@ async def actualizar_wallet_firmante(firmante_uuid: str, wallet_address: str = B
         raise HTTPException(status_code=400, detail="La dirección de wallet proporcionada no existe en la red blockchain")
 
     firmante.wallet = wallet_address
-
     try:
         actualizar_firmante_wallet(firmante_uuid, wallet_address)
+        
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
 
@@ -136,18 +136,37 @@ def firmar_documento(documento_uuid: str, firmante_firmar_request: FirmanteFirma
     if not documento:
         raise HTTPException(status_code=404, detail="Documento no encontrado en sistema")
     
+    nombre_completo=f"{firmante.nombres} {firmante.apellidos}"
     if(firmante.firma_delegada):
        #logica para firma delegada
-       print("firma delegada")
-       pass
+        print("firma delegada")
+        print("Firmando documento en blockchain...")
+        print("Hash del documento:", documento.hash_documento)
+        blockchain_tx_hash = firmar_hash_en_blockchain(documento.hash_documento,nombre_completo, documento.nombre, documento.descripcion, True, firmante.wallet)
+        firmante.metodo_verificacion=firmante_firmar_request.metodo_verificacion
+        firmante.tx_hash=blockchain_tx_hash
+        firmante.firmado=True
+        firmante.fecha_firma=datetime.utcnow()
+        actualizar_firmante(firmante)
+
+        log_signed_document_action(documento.uuid, "signed by user_uuid"+firmante.uuid+" firma delegada", datetime.utcnow().isoformat())
+
+        
     else:
        #logica para firma con wallet
         print("firma delegada false")
         print("Firmando documento en blockchain...")
         print("Hash del documento:", documento.hash_documento)
-        nombre_completo=f"{firmante.nombres} {firmante.apellidos}"
+        
         blockchain_tx_hash = firmar_hash_en_blockchain(documento.hash_documento,nombre_completo, documento.nombre, documento.descripcion, False)
-        update_signed_document_blockchain_info(documento_uuid, blockchain_tx_hash)
+        firmante.metodo_verificacion=firmante_firmar_request.metodo_verificacion
+        firmante.tx_hash=blockchain_tx_hash
+        firmante.firmado=True
+        firmante.fecha_firma=datetime.utcnow()
+        actualizar_firmante(firmante)
+
+        log_signed_document_action(documento.uuid, "signed by user_uuid"+firmante.uuid+" by system", datetime.utcnow().isoformat())
+
 
     # Lógica para firmar el documento según el método de verificación
     return {"message": f"Documento {firmante.documento_uuid} firmado usando {firmante_firmar_request.metodo_verificacion}"}

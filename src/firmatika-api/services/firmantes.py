@@ -114,9 +114,9 @@ def actualizar_firmante_wallet(firmante_uuid: str, wallet_address: str):
     
     if not wallet_existe_en_red(wallet_address):
         raise ValueError("La dirección de wallet proporcionada no existe en la red blockchain")
-    
+
     doc_ref = db.collection("firmantes").document(firmante_uuid)
-    doc_ref.update({"wallet": wallet_address,"firma_delegada": False})
+    doc_ref.update({"wallet": wallet_address,"firma_delegada": True})
 
 def acutializar_firmante_biometrica(firmante_uuid: str, biometric_data: dict[str, str]):
     doc_ref = db.collection("firmantes").document(firmante_uuid)

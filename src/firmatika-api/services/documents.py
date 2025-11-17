@@ -75,3 +75,13 @@ def get_document_by_uuid(document_uuid: str) -> DocumentoFirmado | None:
     if doc:
         return DocumentoFirmado(**doc[0].to_dict())
     return None
+
+def get_firmantes_by_document_uuid(document_uuid: str) -> list:
+    firmantes_ref = db.collection("firmantes")
+    query = firmantes_ref.where("documento_uuid", "==", document_uuid)
+    results = query.stream()
+    firmantes = []
+    for doc in results:
+        data = doc.to_dict()
+        firmantes.append(data)
+    return firmantes

@@ -31,23 +31,28 @@ def firmar_hash_en_blockchain(hash_documento: str,nombre_completo: str, nombre_d
 
         gas_estimate = 0
         if(delegada and user_wallet):
-            gas_estimate = contrato.functions.firmarDelegada(hash_documento,nombre_completo, nombre_documento, descripcion_documento, user_wallet).estimate_gas({"from": cuenta.address})
+            direccion_checksum = Web3.to_checksum_address(user_wallet)
+            gas_estimate = contrato.functions.firmarDelegada(hash_documento,nombre_completo, nombre_documento, descripcion_documento, direccion_checksum).estimate_gas({"from": cuenta.address})
         else:
             gas_estimate =contrato.functions.firmarDocumento(hash_documento, nombre_completo, nombre_documento, descripcion_documento, delegada).estimate_gas({"from": cuenta.address})
         
         costo_total = gas_estimate * gas_price
 
         print("Costo estimado:", w3.from_wei(costo_total, "ether"))
-
+        print("delegada:", delegada)
+        print("user_wallet:", user_wallet)
         tx = None
         if(delegada and user_wallet):
-            tx = contrato.functions.firmarDelegada(hash_documento, nombre_completo, nombre_documento, descripcion_documento, user_wallet).build_transaction({
+            print("Firmando como delegada para la wallet:", user_wallet)
+            direccion_checksum = Web3.to_checksum_address(user_wallet)
+            tx = contrato.functions.firmarDelegada(hash_documento, nombre_completo, nombre_documento, descripcion_documento, direccion_checksum).build_transaction({
                 "from": cuenta.address,
                 "nonce": nonce,
                 "gas": gas_estimate,
                 "gasPrice": gas_price
             })
         else:
+            print("Firmando directamente....")
             tx = contrato.functions.firmarDocumento(hash_documento, nombre_completo, nombre_documento, descripcion_documento, delegada).build_transaction({
                 "from": cuenta.address,
                 "nonce": nonce,
@@ -80,7 +85,8 @@ def wallet_existe_en_red(address: str) -> bool:
     if not Web3.is_address(address):
         return False  # Formato inválido
 
-    balance = w3.eth.get_balance(address)
-    tx_count = w3.eth.get_transaction_count(address)
+    direccion_checksum = Web3.to_checksum_address(address)
+    balance = w3.eth.get_balance(direccion_checksum)
+    tx_count = w3.eth.get_transaction_count(direccion_checksum)
 
     return balance > 0 or tx_count > 0
