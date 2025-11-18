@@ -33,3 +33,6 @@ reportlab==3.6.13
 
 # Otras utilidades
 qrcode[pil]==7.4.2
+
+# Seguridad adicional
+argon2-cffi==23.1.0

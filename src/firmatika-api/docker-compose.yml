@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  firmatika-api:
+    build: .
+    container_name: firmatika-api
+    env_file:
+      - .env
+    ports:
+      - "8934:8080"
+    volumes:
+      - .:/firmatika-api
+    restart: unless-stopped
