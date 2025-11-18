@@ -13,6 +13,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia el resto del código de la aplicación
 COPY . .
 
+RUN mkdir -p /firmatika-blockchain
+
+WORKDIR /firmatika-blockchain
+
+# copia los archivos artificat de blockchain
+COPY ./firmatika-blockchain .
+
+WORKDIR /firmatika-api
 # Expone el puerto por defecto de Uvicorn
 EXPOSE 8000
 
