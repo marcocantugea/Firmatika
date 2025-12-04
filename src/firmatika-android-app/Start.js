@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Image, TextInput, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { styles } from './styles';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -53,7 +53,10 @@ export default function Start({ navigation }) {
                             />
                         </View>
                         <View style={{ alignItems: 'center', alignContent: 'center' }}>
-                            <Text style={[styles.titleH4]}>No Tienes Cuenta? Registrate aqui</Text>
+                            <Text style={[styles.titleH4]}>No Tienes Cuenta?</Text> 
+                            <Pressable onPress={() => { navigation.replace('Register'); }}>
+                                <Text style={{ color: '#0b99b3ff', fontWeight: 'bold', fontSize: 16 }}>Regístrate</Text>
+                            </Pressable>
                         </View>
                     </SafeAreaView>
                 </SafeAreaProvider>
